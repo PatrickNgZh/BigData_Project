@@ -11,7 +11,7 @@ public class itemReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
 		for (IntWritable val : values) {
 				count += val.get();
 		}
-		if (FreqItems.confidenceTreshold <= count){
+		if (FreqItems.supportTreshold <= count){
 			sum.set(count);
 			context.write(key, sum);
 		}
