@@ -11,10 +11,10 @@ public class itemReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
 		for (IntWritable val : values) {
 				count += val.get();
 		}
-		sum.set(count);
-		
-		context.write(key, sum);
-		
+		if (FreqItems.confidenceTreshold <= count){
+			sum.set(count);
+			context.write(key, sum);
+		}
 	}
 
 }

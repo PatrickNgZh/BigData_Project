@@ -1,3 +1,5 @@
+import java.util.Scanner;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -10,7 +12,18 @@ import org.apache.hadoop.util.GenericOptionsParser;
 
 public class FreqItems {
 
+	public static int supportTreshold;
+	public static int confidenceTreshold;
+	
 	public static void main(String[] args) throws Exception {
+		
+		Scanner reader = new Scanner(System.in);
+		System.out.println("Enter a number as the support treshold: ");
+		supportTreshold = reader.nextInt();
+		System.out.println("Enter a number as the confidence treshold: ");
+		confidenceTreshold = reader.nextInt();
+		reader.close();
+		
 		FileSystem fs = FileSystem.get(new Configuration());
 		fs.delete(new Path("C:/Users/steff/git/MapReduce_apriori_SV_VR/out"), true);
 		Configuration conf = new Configuration();
