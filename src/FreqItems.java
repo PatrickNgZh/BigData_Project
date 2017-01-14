@@ -1,5 +1,4 @@
 import java.util.Scanner;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -12,20 +11,20 @@ import org.apache.hadoop.util.GenericOptionsParser;
 
 public class FreqItems {
 
-	public static int supportTreshold;
-	public static int confidenceTreshold;
+	private static int supportTreshold;
+	private static float confidenceTreshold;
 	
 	public static void main(String[] args) throws Exception {
 		
 		Scanner reader = new Scanner(System.in);
 		System.out.println("Enter a number as the support treshold: ");
-		supportTreshold = reader.nextInt();
+		setSupportTreshold(reader.nextInt());
 		System.out.println("Enter a number as the confidence treshold: ");
-		confidenceTreshold = reader.nextInt();
+		setConfidenceTreshold(reader.nextFloat());
 		reader.close();
 		
 		FileSystem fs = FileSystem.get(new Configuration());
-		fs.delete(new Path("C:/Users/steff/git/MapReduce_apriori_SV_VR/out"), true);
+		fs.delete(new Path("./out"), true);
 		Configuration conf = new Configuration();
 		String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
 		if (otherArgs.length != 2) {
@@ -44,6 +43,28 @@ public class FreqItems {
 		FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
 		System.exit(job.waitForCompletion(true) ? 0 : 1);
 	}
+	
+	public static int getSupportTreshold()
+	{
+		return supportTreshold;	
+	}
+	
+	public static float getConfidenceTreshold()
+	{
+		return confidenceTreshold;	
+	}
+	
+	public static void setSupportTreshold(int ST)
+	{
+		supportTreshold = ST;
+	}
+	
+	public static void setConfidenceTreshold(float f)
+	{
+		confidenceTreshold = f;	
+	}
+	
+
 
 }
 
