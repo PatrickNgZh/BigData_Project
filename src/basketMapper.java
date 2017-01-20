@@ -12,7 +12,7 @@ public class basketMapper extends Mapper<Object, Text, Text, IntWritable> {
 		String text = value.toString();
 		String [] input = text.split(",");
 		
-		for (int i=0;i<input.length;i++){
+		for (int i = 0; i < input.length; i++){
 			item.set(input[i]);
 			context.write(item, one);			
 		}
