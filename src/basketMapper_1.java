@@ -9,6 +9,8 @@ public class basketMapper_1 extends Mapper<Object, Text, Text, IntWritable> {
 	private final static IntWritable one = new IntWritable(1);
 
 	public void map(Object key, Text value , Context context) throws IOException, InterruptedException {
+		System.out.println("Mapper 1");
+		
 		String text = value.toString();
 		String [] input = text.split(",");
 		
