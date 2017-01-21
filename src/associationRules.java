@@ -23,53 +23,48 @@ public class associationRules {
 	static double confidenceThreshold = FreqItems.getConfidenceTreshold();
 	private static HashMap<String[], Integer> freqItemsetsHashMap = readInput(conf);
 	
+	//main method
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		
-	}	
-	public void genRules(String[] freqItemset, String[] subset) {
-
-		String[][] itemSubsetSet = new String[subset.length][];
-		String[] subsets = getSubSets(subset, subset.length - 1).toArray(new String[subset.length]);
-		for (int i = 0; i < subset.length; i++) {
-			itemSubsetSet[i] = subsets[i].split(",");
-		}
-	
-		//recursively iterate over all subsets of subset calculating confidence for each possible rule
-		for (int i = 0; i < itemSubsetSet.length; i++) {
-			double confidence = 0.0;
-			String[] consequent = getSubset(freqItemset, itemSubsetSet[i]);
-			confidence = (double)getSupport(freqItemset) / getSupport(itemSubsetSet[i]); 
-			if (confidence >= FreqItems.getConfidenceTreshold()) {
-				//write the association rule to an output file
-				outputRules(conf, itemSubsetSet[i], consequent, confidence);
-
-				//check if length of subset of the subset is more than 1 and we can continue recursion
-				if (itemSubsetSet[i].length > 1) {
-					genRules(freqItemset, itemSubsetSet[i]);
-				}
+		for (i in all large frequent itemsets of k > 2) {
+			ArrayList<Set<String>> consequentArray = new ArrayList<Set<String>>();
+			for (int j = 0; j < i.length(); j++) {
+				Set<String> currentItem = new HashSet<String>();
+				currentItem.add(i[j]);
+				consequentArray.add(j, currentItem);
 			}
-		}				
+			genRules(frequentItemset, consequentArray);
+		}
+		
+	}	
+	public void genRules(Set<String> freqItemset, ArrayList<Set<String>> setOfConsequents) {
 
+		int k = freqItemset.length;
+		int m = setOfConsequents.get(0).size();
+		
+		if (k > m + 1) {
+		
+			ArrayList<Set<String>> superSetOfConsequents = aprioriGen(setOfConsequents);
+			
+			for (Set<String> consequent : superSetOfConsequents) {
+				double confidence = 0.0;
+				Set<String> antecedent = new HashSet<String>();
+				antecedent.addAll(freqItemset);
+				antecedent.removeAll(consequent);
+				confidence = (double)getSupport(freqItemset) / getSupport(antecedent);
+				
+				if (confidence >= FreqItems.getConfidenceTreshold()) {
+					//write the association rule to an output file
+					outputRules(conf, itemSubsetSet[i], consequent, confidence);
+				} else {
+					superSetOfConsequents.remove(superSetOfConsequents.indexOf(consequent));
+				}
+				genRules(freqItemset, superSetOfConsequents);	
+			}
+		}
 	}
 
-//	// method to get all subsets of a set with 1 fewer item (e.g. {A,B,C,D} -> {A,B,C}, {A,C,D}, {B,C,D}, {A,B,D})
-//	public String[][] getSubsets(String[] mainSet, int k) {
-//		String[][] result = new String[mainSet.length][]; 
-//		
-//		for (int i = 0; i < mainSet.length; i++) {
-//			String[] temp = new String[(mainSet.length - 1)];
-//			
-//			for (int j = 0, t = mainSet.length - 1; j < mainSet.length - 1; j++, t--) {
-//				
-//				
-//			}
-//			
-//			result[i] = temp;
-//		}
-//		
-//		return result;
-//	}
 //	
 //	static void getSubsets(String[] freqItemset, boolean[] used, int startIndex, int currentSize, int k) {
 //		if (currentSize == k) {
@@ -79,48 +74,96 @@ public class associationRules {
 //		}
 //		
 //	}
+//	
+//	private static ArrayList<String> getSubSets(String[] input, int k) {
+//		Set<String> subsets = new HashSet<String>();
+//		for (int j=input.length-1;j>=0; j--){
+//			if (j>0 && j<input.length-1){
+//				String [] toCheck1 =Arrays.copyOfRange(input, 0, j);
+//				String [] toCheck2 = Arrays.copyOfRange(input, j+1,input.length);
+//				String [] insert = new String [toCheck1.length+toCheck2.length];
+//
+//				for (int i=0; i<insert.length;i++){
+//					if (i <toCheck1.length){
+//						insert [i]=toCheck1[i];
+//					}else{
+//						insert [i]=toCheck2[i-toCheck1.length];
+//					}
+//				}
+//				subsets.add(String.join(",", insert));
+//				if (insert.length >k){
+//					subsets.addAll(getSubSets(insert,k));
+//				}
+//			}
+//			else if(j==0){
+//				String [] insert =Arrays.copyOfRange(input, 1, input.length);
+//				subsets.add(String.join(",", insert));
+//				if (insert.length >k){
+//					subsets.addAll(getSubSets(insert,k));
+//				}
+//			}
+//			
+//			else if (j==input.length-1){
+//				String [] insert =	Arrays.copyOfRange(input, 0, input.length-1);
+//				subsets.add(String.join(",", insert));
+//				if (insert.length >k){
+//					subsets.addAll(getSubSets(insert,k));
+//				}
+//			}
+//		}
+//		ArrayList<String> subset_list = new ArrayList<String>();
+//		subset_list.addAll(subsets);
+//		return subset_list;
+//	}
 	
-	private static ArrayList<String> getSubSets(String[] input, int k) {
-		Set<String> subsets = new HashSet<String>();
-		for (int j=input.length-1;j>=0; j--){
-			if (j>0 && j<input.length-1){
-				String [] toCheck1 =Arrays.copyOfRange(input, 0, j);
-				String [] toCheck2 = Arrays.copyOfRange(input, j+1,input.length);
-				String [] insert = new String [toCheck1.length+toCheck2.length];
-
-				for (int i=0; i<insert.length;i++){
-					if (i <toCheck1.length){
-						insert [i]=toCheck1[i];
-					}else{
-						insert [i]=toCheck2[i-toCheck1.length];
-					}
-				}
-				subsets.add(String.join(",", insert));
-				if (insert.length >k){
-					subsets.addAll(getSubSets(insert,k));
-				}
-			}
-			else if(j==0){
-				String [] insert =Arrays.copyOfRange(input, 1, input.length);
-				subsets.add(String.join(",", insert));
-				if (insert.length >k){
-					subsets.addAll(getSubSets(insert,k));
-				}
-			}
+	// method to generate all possible sets of k+1 lengths from an array of sets of length k 
+	private static ArrayList<Set<String>> aprioriGen(ArrayList<Set<String>> consequentsArray) {
+		
+		ArrayList<Set<String>> newConsequentArray = new ArrayList<Set<String>>();
+		int k = consequentsArray.get(0).size();
+		
+		for (int i = 0; i < consequentsArray.size() - 1; i++) {
 			
-			else if (j==input.length-1){
-				String [] insert =	Arrays.copyOfRange(input, 0, input.length-1);
-				subsets.add(String.join(",", insert));
-				if (insert.length >k){
-					subsets.addAll(getSubSets(insert,k));
+			ArrayList<String> temp1 = new ArrayList<String>();
+			temp1.addAll(consequentsArray.get(i));
+			
+			for (int j = i + 1; j < consequentsArray.size(); j++) {
+				
+				ArrayList<String> temp2 = new ArrayList<String>();
+				temp2.addAll(consequentsArray.get(j));
+				Set<String> setToAdd = new HashSet<String>();
+				
+				if (k == 1) {
+					
+					setToAdd.add(temp1.get(j) + temp2.get(j));
+					newConsequentArray.add(setToAdd);
+					
+				} else {
+					
+					boolean flag = true;
+					for (int t = 0; t < k; t++) {
+						if (temp1.get(t) != temp2.get(t)) {
+							flag = false;
+						}
+					}
+					
+					if (flag == true) {
+						
+						for (int t = 0; t < k - 1; t++) {
+							setToAdd.add(temp1.get(t));
+						}
+						
+						setToAdd.add(temp2.get(k-1));
+						newConsequentArray.add(setToAdd);
+					}
 				}
 			}
 		}
-		ArrayList<String> subset_list = new ArrayList<String>();
-		subset_list.addAll(subsets);
-		return subset_list;
+		
+		return newConsequentArray; 
 	}
-
+	
+	
 	//method that subtracts a subset from a set and returns the result
 	public static String[] getSubset(String[] set, String[] subset) {
 		ArrayList<String> result = new ArrayList<String>();
@@ -147,7 +190,7 @@ public class associationRules {
 	}
 	
 	//method to get support from hashmap of frequent itemsets
-	public static double getSupport(String[] hashKey) {
+	public static double getSupport(Set<String> hashKey) {
 		return freqItemsetsHashMap.get(hashKey);
 	}
 	
@@ -157,8 +200,8 @@ public class associationRules {
 		return interest;
 	}
 
-    private HashMap<String[], Integer> readInput(Configuration conf) throws IOException {
-    	HashMap<String[], Integer> freqItemsetHashMap = new HashMap<String[], Integer>();
+    private HashMap<Set<String>, Integer> readInput(Configuration conf) throws IOException {
+    	HashMap<Set<String>, Integer> freqItemsetHashMap = new HashMap<Set<String>, Integer>();
     	FileSystem fs = FileSystem.get(conf);
     	String run = String.valueOf(conf.getInt("run",0)-1); 
     	String filename = "/"+run+"/"+run+"-r-00000";
@@ -168,7 +211,8 @@ public class associationRules {
     	String line;
     	while( (line = read.readLine()) != null) {
     		String [] keyValue = line.split("\\t");
-    		freqItemsetHashMap.put(keyValue[0].split(","), Integer.parseInt(keyValue[1]));		
+    		Set<String> keySet = new HashSet<String>(Arrays.asList(keyValue[0].split(",")));
+    		freqItemsetHashMap.put(keySet, Integer.parseInt(keyValue[1]));		
     	}
     	read.close();		
     	return freqItemsetHashMap;
@@ -194,7 +238,6 @@ public class associationRules {
 			}
 		}
 		write.write((int)confidence + "\n");
-		
     }
 }
 
