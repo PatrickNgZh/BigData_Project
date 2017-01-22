@@ -47,27 +47,41 @@ public class basketMapper extends Mapper<Object, Text, Text, IntWritable> {
 
 		if (input.length>conf.getInt("run", 0)){
 
-			ArrayList<String> subsets = getSubSets(input,conf.getInt("run", 0));
+
 			ArrayList<String> result = new ArrayList<String>();
 
-			if (subsets.size()>candidates.size()){
-				for (int i=0;i<candidates.size();i++){
-					if (subsets.contains(candidates.get(i))){
-						result.add(candidates.get(i));
-					}
-				}
-			}else{
+			if (candidates.size()>1000){
+				ArrayList<String> subsets = getSubSets(input,conf.getInt("run", 0));
 				for (int i=0;i<subsets.size();i++){
 					if (candidates.contains(subsets.get(i))){
 						result.add(subsets.get(i));
 					}
 				}
 			}
+			else{
+				for (int i=0;i<candidates.size();i++){
+					String [] candidate = candidates.get(i).split(",");
+					boolean match = true;
+					
+					for (int j=0;j<candidate.length;j++){
+						if (!Arrays.asList(input).contains(candidate[j]))
+						{
+							match = false;
+						}
+					}
+					
+					if (match == true){
+						result.add(candidates.get(i));
+					}
+				}
+			}
+
+
+
+
 			for (int i=0;i<result.size();i++){
 				item.set(result.get(i));
-
 				context.write(item, one);
-				//System.out.println("k Mapper   = " + result.get(i));
 			}		
 		}
 		else if (input.length==conf.getInt("run", 0)){
@@ -75,9 +89,7 @@ public class basketMapper extends Mapper<Object, Text, Text, IntWritable> {
 
 			if (candidates.contains(input_string)){
 				item.set(input_string);
-
 				context.write(item, one);
-				//System.out.println("k Mapper   = " + input_string);
 			}
 		}
 
@@ -92,22 +104,19 @@ public class basketMapper extends Mapper<Object, Text, Text, IntWritable> {
 	}
 
 	private static void getSubSets_void(List<String> superSet, int k, int id, Set<String> current,List<Set<String>> solution) {
-		//enhance and adapt!!!!http://stackoverflow.com/questions/12548312/find-all-subsets-of-length-k-in-an-array
 
-		//successful stop clause
 		if (current.size() == k) {
 			solution.add(new HashSet<>(current));
 			return;
 		}
 
-		//unseccessful stop clause
 		if (id == superSet.size()) return;
 		String x = superSet.get(id);
+		
 		current.add(x);
-		//"guess" x is in the subset
 		getSubSets_void(superSet, k, id+1, current, solution);
+		
 		current.remove(x);
-		//"guess" x is not in the subset
 		getSubSets_void(superSet, k, id+1, current, solution);
 	}
 
@@ -150,7 +159,6 @@ public class basketMapper extends Mapper<Object, Text, Text, IntWritable> {
 			String [] keyValue = line.split("\\t");
 			candidates.add(keyValue[0]);		
 		}
-
 		read.close();		
 
 		return candidates;
