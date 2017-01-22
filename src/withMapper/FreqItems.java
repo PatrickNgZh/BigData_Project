@@ -58,7 +58,7 @@ public class FreqItems {
 		conf.set("enhanced_in", "enhanced_in");
 
 
-		double [] tresholds = readTresholds();	
+		double [] tresholds = readThresholds();	
 		conf.setInt("supportTreshold", (int)tresholds[0]);
 		conf.setDouble("confidenceTreshold", tresholds[1]);
 
@@ -332,21 +332,21 @@ public class FreqItems {
 		job.waitForCompletion(true);
 	}
 
-	private static double[] readTresholds(){
-		double [] tresholds = new double[2];
-		//Scanner reader = new Scanner(System.in);
-		//System.out.println("Enter a number as the support treshold: ");
-		//tresholds[0] = reader.nextInt();
+	private static double[] readThresholds(){
+		double [] thresholds = new double[2];
+		Scanner reader = new Scanner(System.in);
+		System.out.println("Enter a number as the support treshold: ");
+		thresholds[0] = reader.nextDouble();
 		// Placeholder for testing
-		tresholds[0] = 100;
+		//thresholds[0] = 100;
 
-		//System.out.println("Enter a number as the confidence treshold: ");
-		//tresholds[1] = reader.nextInt();
+		System.out.println("Enter a number as the confidence treshold: ");
+		thresholds[1] = reader.nextDouble();
 		// Placeholder for testing
-		tresholds[1] = 0.5;
-		//reader.close();
+		//thresholds[1] = 0.5;
+		reader.close();
 
-		return tresholds;
+		return thresholds;
 	}
 
 	private static HashMap<ArrayList<String>, Integer> readInput(Configuration conf) throws IOException {
