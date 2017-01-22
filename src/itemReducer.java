@@ -15,7 +15,6 @@ public class itemReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
     }
 	
 	public void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
-		//System.out.println(context.getConfiguration().getInt("run", 0));
 		String run = String.valueOf(context.getConfiguration().getInt("run", 0));
 		int count = 0;
 		
@@ -24,10 +23,7 @@ public class itemReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
 			count += val.get();
 		}
 		
-		//System.out.println(count + " " +  context.getConfiguration().getFloat("supportTreshold",0));
 		if (context.getConfiguration().getFloat("supportTreshold",0) <= count){
-			
-			//System.out.println("ich schreibe");
 			sum.set(count);
 			mos.write(run,key, sum);
 		}
