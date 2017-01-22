@@ -1,4 +1,4 @@
-package withMapper;
+package noMapper;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -17,11 +17,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.Text;  
 import org.apache.hadoop.mapreduce.Job;  
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.input.MultipleInputs;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;  
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
@@ -33,23 +31,24 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 public class FreqItems {
 	public static Configuration conf;
-
+	static double confidenceThreshold;
+	private static HashMap<ArrayList<String>, Integer> freqItemsetsHashMap;
+	private static ArrayList<String> outputList;
 	private static int counter;
-
+	
 	public static void main(String[] args) throws Exception {
 		conf = new Configuration();
-
+		outputList = new ArrayList<String>();
 		counter = 0;
 
 		FileSystem fs = FileSystem.get(conf);
 		fs.delete(new Path("./out"), true);
 		fs.delete(new Path("./tmp"), true);
 		fs.delete(new Path("./enhanced_in"), true);
-		fs.delete(new Path("./outputRules"), true);
 
 		String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
 		if (otherArgs.length != 1) {
-			System.err.println("Please define parameter: <in>");
+			System.err.println("Please define parameters: <in>");
 			System.exit(2);
 		}
 		conf.set("in", args[0]);
@@ -69,10 +68,10 @@ public class FreqItems {
 		{
 			System.out.print("...");
 
-			runJob_freq(run);
-			MoreFrequents = generateCandidates(run);
+			runJob(conf,run);
+			MoreFrequents = generateCandidates(conf, run);
 			if (run ==1){
-				onlyfrequent();
+				onlyfrequent(conf);
 			}
 
 			run+=1;
@@ -81,29 +80,40 @@ public class FreqItems {
 		conf.setInt("basketsNumber", counter);
 
 		/// Association rule building
+		confidenceThreshold = conf.getDouble("confidenceTreshold", 0);
+		freqItemsetsHashMap = readInput(conf);
+		ArrayList<ArrayList<String>> freqItems = readInputForRules(conf);
 
-		runJob_rules();
-		
+		for (int outerLoop = 0; outerLoop < freqItems.size(); outerLoop++) {
+			ArrayList<ArrayList<String>> consequentArray = new ArrayList<ArrayList<String>>();
+			ArrayList<String> tempForSet = new ArrayList<String>();
+			tempForSet.addAll(freqItems.get(outerLoop));
+			for (int innerLoop = 0; innerLoop < tempForSet.size(); innerLoop++) {
+				ArrayList<String> currentItem = new ArrayList<String>();
+				currentItem.add(tempForSet.get(innerLoop));
+				consequentArray.add(currentItem);
+			}
+			genRules(freqItems.get(outerLoop), consequentArray);
+		}
+		printrules();
 		System.out.println();
-		System.out.println("All association rules can now be found in the outputRules folder");
-		
+		System.out.println("All association rules can now be found in the out folder");
 		System.exit(0);
+
 	}
 
-	
+	private static void printrules() throws IOException {
+		String filename = "/output_rules";
+		Path pathOutput = new Path(conf.get("out") + filename);
+		FileSystem fs = FileSystem.get(conf);
+		Writer write = new BufferedWriter(new OutputStreamWriter(fs.create(pathOutput)));
+		for (int i =0; i<outputList.size();i++){
+			write.write(outputList.get(i));
+		}
+		write.close();
+	}
 
-//	private static void printrules() throws IOException {
-//		String filename = "/output_rules";
-//		Path pathOutput = new Path(conf.get("out") + filename);
-//		FileSystem fs = FileSystem.get(conf);
-//		Writer write = new BufferedWriter(new OutputStreamWriter(fs.create(pathOutput)));
-//		for (int i =0; i<outputList.size();i++){
-//			write.write(outputList.get(i));
-//		}
-//		write.close();
-//	}
-
-	private static void onlyfrequent() throws IOException {
+	private static void onlyfrequent(Configuration conf) throws IOException {
 		String filename = "/"+1+"/"+1+"-r-00000";
 		Path pathFrequent=new Path(conf.get("out") +  filename);
 		FileSystem fs = FileSystem.get(conf);
@@ -159,7 +169,7 @@ public class FreqItems {
 
 	}
 
-	private static boolean generateCandidates(int run) throws Exception {
+	private static boolean generateCandidates(Configuration conf, int run) throws Exception {
 		boolean frequents_found = false;
 		String filename = "/"+String.valueOf(run)+"/"+String.valueOf(run)+"-r-00000";
 		Path pathInput=new Path(conf.get("out") +  filename);
@@ -290,24 +300,9 @@ public class FreqItems {
 		}
 		return allFrequent;
 	}
-	private static void runJob_rules() throws ClassNotFoundException, IOException, InterruptedException {
-		@SuppressWarnings("deprecation")
-		Job job = new Job(conf, "Run");
-		job.setJarByClass(FreqItems.class);
-		job.setMapperClass(frequentSetsMapper.class);
-		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(Text.class);
-		LazyOutputFormat.setOutputFormatClass(job, TextOutputFormat.class);	
-		int run = conf.getInt("run",0);
-		for (int j = run-1; j >= 2; j--) {
-			Path inputPath = new Path(conf.get("out")+"/"+String.valueOf(j));
-			MultipleInputs.addInputPath(job, inputPath , TextInputFormat.class, frequentSetsMapper.class);
-		}
-		FileOutputFormat.setOutputPath(job, new Path("./outputRules"));
-		job.waitForCompletion(true);
-	}
-	
-	private static void runJob_freq (int run) throws Exception
+
+
+	private static void runJob (Configuration conf, int run) throws Exception
 	{	
 
 		conf.setInt("run", run);
@@ -317,7 +312,7 @@ public class FreqItems {
 		job.setJarByClass(FreqItems.class);
 		job.setMapperClass(basketMapper.class);
 
-		job.setCombinerClass(itemCombiner.class);
+		//job.setCombinerClass(itemCombiner.class);
 		job.setReducerClass(itemReducer.class);
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(IntWritable.class);
@@ -347,6 +342,105 @@ public class FreqItems {
 		//reader.close();
 
 		return tresholds;
+	}
+
+	public static void genRules(ArrayList<String> freqItemset, ArrayList<ArrayList<String>> setOfConsequents) throws IOException {
+
+		int k = freqItemset.size();
+		int m = setOfConsequents.get(0).size();
+
+		if (k > m) {
+
+			ArrayList<ArrayList<String>> copy = new ArrayList<ArrayList<String>>();
+			copy.addAll(setOfConsequents);
+
+			for (ArrayList<String> consequent : setOfConsequents) {
+				double confidence = 0.0;
+				double interest = 0.0;
+				ArrayList<String> antecedent = new ArrayList<String>();
+				
+				antecedent.addAll(freqItemset);
+				antecedent.removeAll(consequent);
+				
+				confidence = (double)getSupport(freqItemset) / getSupport(antecedent);
+				interest = confidence - ( (double)getSupport(consequent) / conf.getInt("basketsNumber", 1) );
+				
+				if (confidence >= confidenceThreshold) {
+					
+					outputRules(antecedent, consequent, confidence, interest);
+					
+				} else {
+					
+					copy.remove(copy.indexOf(consequent));
+					
+				}
+			}
+			
+			if (copy.size() > 0) {
+				
+				ArrayList<ArrayList<String>> superSetOfConsequents = aprioriGen(copy);
+				
+				if (superSetOfConsequents.size() > 0) {
+					
+					genRules(freqItemset, superSetOfConsequents);
+					
+				} else {
+					
+					//System.out.println("No Supersets");
+				}
+			}
+		}
+	}
+
+	// method to generate all possible sets of k+1 lengths from an array of sets of length k 
+	private static ArrayList<ArrayList<String>> aprioriGen(ArrayList<ArrayList<String>> consequentsArray) {
+		ArrayList<ArrayList<String>> newConsequentArray = new ArrayList<ArrayList<String>>();
+		int k = consequentsArray.get(0).size();
+
+		for (int i = 0; i < consequentsArray.size() - 1; i++) {
+
+			ArrayList<String> temp1 = new ArrayList<String>();
+			temp1.addAll(consequentsArray.get(i));
+
+			for (int j = i + 1; j < consequentsArray.size(); j++) {
+
+				ArrayList<String> temp2 = new ArrayList<String>();
+				temp2.addAll(consequentsArray.get(j));
+				ArrayList<String> setToAdd = new ArrayList<String>();
+
+				if (k == 1) {
+
+					setToAdd.add(temp1.get(0));
+					setToAdd.add(temp2.get(0));
+					newConsequentArray.add(setToAdd);
+
+				} else {
+
+					boolean flag = true;
+					for (int t = 0; t < k - 1; t++) {
+						if (temp1.get(t) != temp2.get(t)) {
+							flag = false;
+						}
+					}
+
+					if (flag == true) {
+
+						for (int t = 0; t < k - 1; t++) {
+							setToAdd.add(temp1.get(t));
+						}
+
+						setToAdd.add(temp2.get(k-1));
+						newConsequentArray.add(setToAdd);
+					}
+				}
+			}
+		}
+		return newConsequentArray; 
+	}
+
+	//method to get support from hashmap of frequent itemsets
+	public static double getSupport(ArrayList<String> hashKey) {
+		return freqItemsetsHashMap.get(hashKey);
 	}
 
 	private static HashMap<ArrayList<String>, Integer> readInput(Configuration conf) throws IOException {
@@ -384,7 +478,6 @@ public class FreqItems {
 			while( (line = read.readLine()) != null) {
 				String [] keyValue = line.split("\\t")[0].split(",");
 				Arrays.sort(keyValue);
-				
 				ArrayList<String> currentSet = new ArrayList<String>(Arrays.asList(keyValue));
 				freqItemsets.add(currentSet);		
 			}
@@ -393,5 +486,30 @@ public class FreqItems {
 		return freqItemsets;
 	}
 
+	// method to write rules to a file
+	private static void outputRules(ArrayList<String> antecedent, ArrayList<String> consequent, double confidence, double interest) throws IOException {
+
+		String TBW = new String();
+		TBW = "{";
+
+		for (int i = 0; i < antecedent.size(); i++ ) {
+			if (i < antecedent.size() - 1) {
+				TBW += antecedent.get(i) + ",";
+			} else {
+				TBW += antecedent.get(i);
+			}
+		}
+		TBW += "} -> ";
+
+		for (int i = 0; i < consequent.size(); i++ ) {
+			if (i < consequent.size() - 1) {
+				TBW += consequent.get(i) + ",";
+			} else {
+				TBW += consequent.get(i);
+			}
+		}
+		TBW += "\t\t" + confidence + "\t\t" + interest + "\n";
+		outputList.add(TBW);
+	}
 }
 
