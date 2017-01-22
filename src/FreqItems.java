@@ -33,10 +33,12 @@ public class FreqItems {
 	static double confidenceThreshold;
 	private static HashMap<ArrayList<String>, Integer> freqItemsetsHashMap;
 	private static ArrayList<String> outputList;
+	private static int counter;
 
 	public static void main(String[] args) throws Exception {
 		conf = new Configuration();
 		outputList = new ArrayList<String>();
+		counter = 0;
 
 		FileSystem fs = FileSystem.get(conf);
 		fs.delete(new Path("./out"), true);
@@ -74,7 +76,7 @@ public class FreqItems {
 			run+=1;
 		}
 		System.out.println("All frequent itemsets can be found in the Out folders");
-
+		conf.setInt("basketsNumber", counter);
 
 		/// Association rule building
 		confidenceThreshold = conf.getDouble("confidenceTreshold", 0);
@@ -130,6 +132,8 @@ public class FreqItems {
 		ArrayList<String> inputList = new ArrayList <String>();		
 		while( (line = read_input.readLine()) != null) {
 			inputList.add(line);
+			counter += 1;
+			
 		}
 
 
@@ -331,7 +335,7 @@ public class FreqItems {
 		//System.out.println("Enter a number as the confidence treshold: ");
 		//tresholds[1] = reader.nextInt();
 		// Placeholder for testing
-		tresholds[1] = 0.1;
+		tresholds[1] = 0.5;
 		//reader.close();
 
 		return tresholds;
@@ -349,86 +353,44 @@ public class FreqItems {
 
 			for (ArrayList<String> consequent : setOfConsequents) {
 				double confidence = 0.0;
+				double interest = 0.0;
 				ArrayList<String> antecedent = new ArrayList<String>();
+				
 				antecedent.addAll(freqItemset);
 				antecedent.removeAll(consequent);
+				
 				confidence = (double)getSupport(freqItemset) / getSupport(antecedent);
-
+				interest = confidence - ( (double)getSupport(consequent) / conf.getInt("basketsNumber", 1) );
+				
 				if (confidence >= confidenceThreshold) {
-					//write the association rule to an output file
-					//System.out.println("test");
-					outputRules(antecedent, consequent, confidence);
+					
+					outputRules(antecedent, consequent, confidence, interest);
+					
 				} else {
+					
 					copy.remove(copy.indexOf(consequent));
+					
 				}
-				if (copy.size()>0){
-					//System.out.println("input   "+copy);
-					ArrayList<ArrayList<String>> superSetOfConsequents = aprioriGen(copy);
-					if (superSetOfConsequents.size()>0){
-						//System.out.println("output   "+superSetOfConsequents);
-						genRules(freqItemset, superSetOfConsequents);
-					}else {
-						//System.out.println("No Supersets");
-					}
+			}
+			
+			if (copy.size() > 0) {
+				
+				ArrayList<ArrayList<String>> superSetOfConsequents = aprioriGen(copy);
+				
+				if (superSetOfConsequents.size() > 0) {
+					
+					genRules(freqItemset, superSetOfConsequents);
+					
+				} else {
+					
+					//System.out.println("No Supersets");
 				}
 			}
 		}
 	}
 
-	//	
-	//	static void getSubsets(String[] freqItemset, boolean[] used, int startIndex, int currentSize, int k) {
-	//		if (currentSize == k) {
-	//			for (int i = 0; i < freqItemset.length; i++) {
-	//				
-	//			}
-	//		}
-	//		
-	//	}
-	//	
-	//	private static ArrayList<String> getSubSets(String[] input, int k) {
-	//		Set<String> subsets = new HashSet<String>();
-	//		for (int j=input.length-1;j>=0; j--){
-	//			if (j>0 && j<input.length-1){
-	//				String [] toCheck1 =Arrays.copyOfRange(input, 0, j);
-	//				String [] toCheck2 = Arrays.copyOfRange(input, j+1,input.length);
-	//				String [] insert = new String [toCheck1.length+toCheck2.length];
-	//
-	//				for (int i=0; i<insert.length;i++){
-	//					if (i <toCheck1.length){
-	//						insert [i]=toCheck1[i];
-	//					}else{
-	//						insert [i]=toCheck2[i-toCheck1.length];
-	//					}
-	//				}
-	//				subsets.add(String.join(",", insert));
-	//				if (insert.length >k){
-	//					subsets.addAll(getSubSets(insert,k));
-	//				}
-	//			}
-	//			else if(j==0){
-	//				String [] insert =Arrays.copyOfRange(input, 1, input.length);
-	//				subsets.add(String.join(",", insert));
-	//				if (insert.length >k){
-	//					subsets.addAll(getSubSets(insert,k));
-	//				}
-	//			}
-	//			
-	//			else if (j==input.length-1){
-	//				String [] insert =	Arrays.copyOfRange(input, 0, input.length-1);
-	//				subsets.add(String.join(",", insert));
-	//				if (insert.length >k){
-	//					subsets.addAll(getSubSets(insert,k));
-	//				}
-	//			}
-	//		}
-	//		ArrayList<String> subset_list = new ArrayList<String>();
-	//		subset_list.addAll(subsets);
-	//		return subset_list;
-	//	}
-
 	// method to generate all possible sets of k+1 lengths from an array of sets of length k 
 	private static ArrayList<ArrayList<String>> aprioriGen(ArrayList<ArrayList<String>> consequentsArray) {
-		//System.out.println("Input    "+consequentsArray);
 		ArrayList<ArrayList<String>> newConsequentArray = new ArrayList<ArrayList<String>>();
 		int k = consequentsArray.get(0).size();
 
@@ -470,45 +432,12 @@ public class FreqItems {
 				}
 			}
 		}
-		//System.out.println("Output    "+newConsequentArray);
 		return newConsequentArray; 
-	}
-
-
-	//method that subtracts a subset from a set and returns the result
-	public static String[] getSubset(String[] set, String[] subset) {
-		ArrayList<String> result = new ArrayList<String>();
-		for (String tmp : set) {
-			if (Arrays.asList(subset).contains(tmp)) {
-				result.add(tmp);
-			}
-		}
-		return listToStringArray(result);
-	}
-
-	//method of converting an arrayList to a String array
-	public static String[] listToStringArray(ArrayList<String> inputArray) {
-		String[] result = new String[inputArray.size()];
-		for (int i = 0; i < inputArray.size(); i++) {
-			result[i] = inputArray.get(i);
-		}
-		return result;
-	}
-
-	//method to compare confidence with threshold
-	public static boolean isConfident(float conf) {
-		return conf >= confidenceThreshold;
 	}
 
 	//method to get support from hashmap of frequent itemsets
 	public static double getSupport(ArrayList<String> hashKey) {
 		return freqItemsetsHashMap.get(hashKey);
-	}
-
-	//method to calculate interest
-	public static double getInterest() {
-		double interest = 0.0;
-		return interest;
 	}
 
 	private static HashMap<ArrayList<String>, Integer> readInput(Configuration conf) throws IOException {
@@ -547,20 +476,15 @@ public class FreqItems {
 				String [] keyValue = line.split("\\t")[0].split(",");
 				Arrays.sort(keyValue);
 				ArrayList<String> currentSet = new ArrayList<String>(Arrays.asList(keyValue));
-				System.out.println(currentSet);
 				freqItemsets.add(currentSet);		
 			}
 			read.close();		
 		}
-		//System.out.println("input for rules");
-		//System.out.println(freqItemsets);
 		return freqItemsets;
 	}
 
 	// method to write rules to a file
-	private static void outputRules(ArrayList<String> antecedent, ArrayList<String> consequent, double confidence) throws IOException {
-		System.out.println("test+write function");
-
+	private static void outputRules(ArrayList<String> antecedent, ArrayList<String> consequent, double confidence, double interest) throws IOException {
 
 		String TBW = new String();
 		TBW = "{";
@@ -581,8 +505,7 @@ public class FreqItems {
 				TBW += consequent.get(i);
 			}
 		}
-		TBW += "\t"+confidence + "\n";
-		System.out.println(TBW);
+		TBW += "\t\t" + confidence + "\t\t" + interest + "\n";
 		outputList.add(TBW);
 	}
 }
