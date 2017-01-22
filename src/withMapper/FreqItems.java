@@ -1,3 +1,4 @@
+package withMapper;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -47,7 +48,7 @@ public class FreqItems {
 		fs.delete(new Path("./outputRules"), true);
 
 		String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
-		if (otherArgs.length != 2) {
+		if (otherArgs.length != 1) {
 			System.err.println("Please define parameter: <in>");
 			System.exit(2);
 		}
