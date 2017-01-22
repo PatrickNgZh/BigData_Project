@@ -7,7 +7,6 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -128,7 +127,7 @@ public class FreqItems {
 		Path pathInput=new Path(conf.get("out") +  filename);
 		FileSystem fs = FileSystem.get(conf);
 		ArrayList<String> inputList = new ArrayList <String>();
-		
+
 		try {
 			BufferedReader read=new BufferedReader(new InputStreamReader(fs.open(pathInput)));		
 
@@ -158,7 +157,6 @@ public class FreqItems {
 			}
 			frequents_found=true;
 		}else{
-			System.out.println("2nd run");
 			for (int i=0;i<inputList.size();i++){
 				String[] first = inputList.get(i).split(",");
 				for (int y=i+1;y<inputList.size();y++){
@@ -263,12 +261,7 @@ public class FreqItems {
 		@SuppressWarnings("deprecation")
 		Job job = new Job(conf, "Run");
 		job.setJarByClass(FreqItems.class);
-		if (run==1){
-			System.out.println("Run 1");
-			job.setMapperClass(basketMapper_1.class);
-		}else {
-			job.setMapperClass(basketMapper_k.class);
-		}
+		job.setMapperClass(basketMapper.class);
 
 		//job.setCombinerClass(itemCombiner.class);
 		job.setReducerClass(itemReducer.class);
