@@ -54,13 +54,17 @@ public class FreqItems {
 		boolean MoreFrequents = true;
 		while (MoreFrequents)
 		{
+			System.out.print("...");
+			
 			runJob(conf,run);
 			MoreFrequents = generateCandidates(conf, run);
 			if (run ==1){
 				onlyfrequent(conf);
 			}
+			
 			run+=1;
 		}
+		System.out.println("Completed");
 		System.out.println("All frequent itemsets can be found in the Out folders");
 
 		System.exit(0);
@@ -280,17 +284,17 @@ public class FreqItems {
 
 	private static int[] readTresholds(){
 		int [] tresholds = new int[2];
-		//Scanner reader = new Scanner(System.in);
-		//System.out.println("Enter a number as the support treshold: ");
-		//tresholds[0] = reader.nextInt();
+		Scanner reader = new Scanner(System.in);
+		System.out.println("Enter a number as the support treshold: ");
+		tresholds[0] = reader.nextInt();
 		// Placeholder for testing
-		tresholds[0] = 100;
+		//tresholds[0] = 100;
 
 		//System.out.println("Enter a number as the confidence treshold: ");
 		//tresholds[1] = reader.nextInt();
 		// Placeholder for testing
 		tresholds[1] = 70;
-		//reader.close();
+		reader.close();
 
 		return tresholds;
 	}
