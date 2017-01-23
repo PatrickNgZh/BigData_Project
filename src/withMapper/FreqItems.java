@@ -85,7 +85,7 @@ public class FreqItems {
 		runJob_rules();
 		
 		System.out.println();
-		System.out.println("All association rules can now be found in the outputRules folder");
+		System.out.println("All association rules can now be found in the 'out' folder");
 		
 		System.exit(0);
 	}

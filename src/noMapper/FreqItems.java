@@ -97,7 +97,7 @@ public class FreqItems {
 		}
 		printrules();
 		System.out.println();
-		System.out.println("All association rules can now be found in the out folder");
+		System.out.println("All association rules can now be found in the 'outputRules' folder");
 		System.exit(0);
 
 	}
@@ -425,7 +425,7 @@ public class FreqItems {
 
 					if (flag == true) {
 
-						for (int t = 0; t < k - 1; t++) {
+						for (int t = 0; t < k ; t++) {
 							setToAdd.add(temp1.get(t));
 						}
 

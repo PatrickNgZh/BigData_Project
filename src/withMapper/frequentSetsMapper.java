@@ -137,7 +137,7 @@ public class frequentSetsMapper extends Mapper<Object, Text, Text, Text> {
 
 					if (flag == true) {
 
-						for (int t = 0; t < k - 1; t++) {
+						for (int t = 0; t < k ; t++) {
 							setToAdd.add(temp1.get(t));
 						}
 
