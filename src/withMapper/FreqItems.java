@@ -309,15 +309,12 @@ public class FreqItems {
 	
 	private static void runJob_freq (int run) throws Exception
 	{	
-
 		conf.setInt("run", run);
 
 		@SuppressWarnings("deprecation")
 		Job job = new Job(conf, "Run");
 		job.setJarByClass(FreqItems.class);
 		job.setMapperClass(basketMapper.class);
-
-		job.setCombinerClass(itemCombiner.class);
 		job.setReducerClass(itemReducer.class);
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(IntWritable.class);
@@ -370,28 +367,6 @@ public class FreqItems {
 		return freqItemsetHashMap;
 	}
 
-	private static ArrayList<ArrayList<String>> readInputForRules(Configuration conf) throws IOException {
-		ArrayList<ArrayList<String>> freqItemsets = new ArrayList<ArrayList<String>>();
-		FileSystem fs = FileSystem.get(conf);
-		int run = conf.getInt("run",0);
-
-		for (int j = run-1; j >= 2; j--) {
-			String filename = "/"+j+"/"+j+"-r-00000";
-			Path pathInput=new Path(conf.get("out") +  filename);
-			BufferedReader read = new BufferedReader(new InputStreamReader(fs.open(pathInput)));
-
-			String line;
-			while( (line = read.readLine()) != null) {
-				String [] keyValue = line.split("\\t")[0].split(",");
-				Arrays.sort(keyValue);
-				
-				ArrayList<String> currentSet = new ArrayList<String>(Arrays.asList(keyValue));
-				freqItemsets.add(currentSet);		
-			}
-			read.close();		
-		}
-		return freqItemsets;
-	}
 
 }
 

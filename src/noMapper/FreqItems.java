@@ -45,6 +45,7 @@ public class FreqItems {
 		fs.delete(new Path("./out"), true);
 		fs.delete(new Path("./tmp"), true);
 		fs.delete(new Path("./enhanced_in"), true);
+		fs.delete(new Path("./outputRules"), true);
 
 		String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
 		if (otherArgs.length != 1) {
@@ -311,8 +312,6 @@ public class FreqItems {
 		Job job = new Job(conf, "Run");
 		job.setJarByClass(FreqItems.class);
 		job.setMapperClass(basketMapper.class);
-
-		//job.setCombinerClass(itemCombiner.class);
 		job.setReducerClass(itemReducer.class);
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(IntWritable.class);

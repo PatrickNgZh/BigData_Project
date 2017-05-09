@@ -51,7 +51,7 @@ public class basketMapper extends Mapper<Object, Text, Text, IntWritable> {
 
 			ArrayList<String> result = new ArrayList<String>();
 
-			if (candidates.size()>1000){
+			if (candidates.size()>750 && input.length < 12){
 				ArrayList<String> subsets = getSubSets(input,conf.getInt("run", 0));
 				for (int i=0;i<subsets.size();i++){
 					if (candidates.contains(subsets.get(i))){
@@ -87,13 +87,11 @@ public class basketMapper extends Mapper<Object, Text, Text, IntWritable> {
 		}
 		else if (input.length==conf.getInt("run", 0)){
 			String input_string = String.join(",",input);
-
 			if (candidates.contains(input_string)){
 				item.set(input_string);
 				context.write(item, one);
 			}
 		}
-
 	}
 
 	private void FirstMapper(String[] input, Context context) throws IOException, InterruptedException {
